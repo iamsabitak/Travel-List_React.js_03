@@ -2,24 +2,40 @@ import "./index.css";
 
 import React, { useState } from "react";
 
-const initialItems = [
-  { id: 1, description: "Passports", quantity: 2, packed: false },
-  { id: 2, description: "Socks", quantity: 12, packed: false },
-  { id: 3, description: "Charger", quantity: 1, packed: true },
-  { id: 3, description: "Mobile", quantity: 1, packed: true },
-];
+// const initialItems = [
+//   { id: 1, description: "Passports", quantity: 2, packed: false },
+//   { id: 2, description: "Socks", quantity: 12, packed: false },
+//   { id: 3, description: "Charger", quantity: 1, packed: true },
+//   { id: 3, description: "Mobile", quantity: 1, packed: true },
+// ];
 
 export default function App() {
   const [items, setItems] = useState([]);
+
   const handleAddItems = (item) => {
     setItems((items) => [...items, item]);
   };
+
+  const handleDeleteItems = (id) => {
+    setItems((items) => items.filter((item) => item.id !== id));
+  };
+  function handleToggleItems(id) {
+    setItems((items) =>
+      items.map((item) =>
+        item.id === id ? { ...item, packed: !item.packed } : item
+      )
+    );
+  }
   return (
     <div className="app">
       <Logo />
-      <Form onAddItems={handleAddItems}/>
-      <PackingList items={items}/>
-      <Stats />
+      <Form onAddItems={handleAddItems} />
+      <PackingList
+        items={items}
+        onDeleteItems={handleDeleteItems}
+        onTogglleItems={handleToggleItems}
+      />
+      <Stats items={items} />
     </div>
   );
 }
@@ -31,14 +47,14 @@ const Logo = () => {
     </div>
   );
 };
-const Form = ({onAddItems}) => {
+const Form = ({ onAddItems }) => {
   const [description, setDescription] = useState();
   const [quantity, setQuantity] = useState();
 
   const onHandleSubmit = (e) => {
     e.preventDefault();
     if (!description) return;
-    
+
     const newItems = { description, quantity, packed: false, id: Date.now() };
     console.log(newItems);
 
@@ -69,35 +85,59 @@ const Form = ({onAddItems}) => {
     </>
   );
 };
-const PackingList = ({items}) => {
+const PackingList = ({ items, onDeleteItems, onTogglleItems }) => {
   return (
     <div className="list">
       <ul>
         {items.map((item) => (
-          <Item item={item} key={item.id} />
+          <Item
+            item={item}
+            key={item.id}
+            onDeleteItems={onDeleteItems}
+            onTogglleItems={onTogglleItems}
+          />
         ))}
       </ul>
     </div>
   );
 };
-const Item = ({ item }) => {
+const Item = ({ item, onDeleteItems, onTogglleItems }) => {
   return (
     <>
       <li>
+        <input
+          type="checkbox"
+          value={item.packed}
+          onChange={() => onTogglleItems(item.id)}
+        />
         <span style={item.packed ? { textDecoration: "line-through" } : {}}>
           {item.quantity} {item.description}
         </span>
-        <button>❌</button>
+        <button onClick={() => onDeleteItems(item.id)}>❌</button>
       </li>
     </>
   );
 };
-const Stats = () => {
+const Stats = ({ items }) => {
+  const numItems = items.length;
+  const numPacked = items.filter((item) => item.packed).length;
+  const percentage = Math.round((numPacked / numItems) * 100);
+
+if(!items.length) return <p className="stats">
+  <em>
+   Start adding ome items in your packing list 🚀
+  </em>
+</p>
+
   return (
     <>
       <footer className="stats">
         <em>
-          💼 You have X items in your list, and you have already packed X (X%)
+          {
+          percentage === 100 ? "You got everything! Ready to go 🛩️" :
+         ` 💼 You have ${numItems} items in your list, and you have already packed
+          ${numPacked} (${percentage}%)`
+        }
         </em>
       </footer>
     </>
